@@ -28,7 +28,6 @@
 require('../../config.php');
 require($CFG->dirroot . '/enrol/invitation/locallib.php');
 
-
 //get the additional config settings for this plugin
 $pluginConfig = get_config('enrol_invitation');
 
@@ -119,22 +118,29 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
         $invitationUser = $DB->get_record('user', ['email' => $invitation->email]);
 
         if (!$invitationUser) {
-            //create a new user
-            require_once($CFG->dirroot . '/user/lib.php');
-            $newUser = new stdClass();
-            $newUser->email = $invitation->email;
-            $newUser->username = $invitation->email; //substr($invitation->email, 0, strpos($invitation->email,'@'));
-            $newUser->password = $password;
-            $newUser->confirmed = 1; //force the confirm
+            //are we allowed to create an account?
+            if($pluginConfig->createaccount == 0) {
+                //create a new user
+                require_once($CFG->dirroot . '/user/lib.php');
+                $newUser = new stdClass();
+                $newUser->email = $invitation->email;
+                $newUser->username = $invitation->email; //substr($invitation->email, 0, strpos($invitation->email,'@'));
+                $newUser->password = $password;
+                $newUser->confirmed = 1; //force the confirm
 
-            $newUser->id = user_create_user($newUser, true, true);
+                $newUser->id = user_create_user($newUser, true, true);
 
-            if (!$newUser->id) {
-                throw new moodle_exception('couldnotcreateuser', 'enrol_invitation');
+                if (!$newUser->id) {
+                    throw new moodle_exception('couldnotcreateuser', 'enrol_invitation');
+                } else {
+                    $USER = $newUser;
+                    add_to_log($invitation->courseid, 'course', 'create user .' . $USER->id . ' from invitation',
+                        "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+                }
             } else {
-                $USER = $newUser;
-                add_to_log($invitation->courseid, 'course', 'create user .' . $USER->id . ' from invitation',
-                    "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+                //can't create a user and one wasn't found
+                redirect(new moodle_url('/enrol/invitation/enrol.php', ['token' => $invitation->token]), get_string('user_not_found_and_cant_create', 'enrol_invitation'), null, \core\output\notification::NOTIFY_ERROR);
+                exit;
             }
         } else {
             //use existing user and ignore password

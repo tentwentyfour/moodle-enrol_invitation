@@ -203,4 +203,5 @@ $string['confirm_header'] = 'Confirm';
 $string['user_password'] = 'Please enter a password';
 $string['user_password_confirm'] = 'Please confirm your password';
 $string['missing_password'] = 'Please make sure you have filled in the password and confirmation fields and they are both the same';
+$string['user_not_found_and_cant_create'] = 'Your email address could not be found to continue setup. Please contact your course administrator.';
 $string['enrollment_complete'] = '<strong>Congratulations!</strong> You have been successfully enrolled on "{$a->coursefullname}" as a "{$a->rolename}".';
