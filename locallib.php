@@ -217,11 +217,12 @@ class invitation_manager
     {
 
         global $PAGE, $CFG;
-        $output = $PAGE->get_renderer('theme_boost', 'core');
+        $output = $PAGE->get_renderer('theme_' . $PAGE->theme->name, 'core');
 
         //define the data for the email
         $context = new stdClass();
         $context->wwwroot = $CFG->wwwroot;
+        $context->themename = $PAGE->theme->name;
         $context->coursename = sprintf('%s: %s', $course->shortname, $course->fullname);
         $context->expiration = date('M j, Y g:ia', $invitation->timeexpiration);
         $context->supportemail = $CFG->supportemail;
