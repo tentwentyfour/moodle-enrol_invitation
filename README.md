@@ -1,19 +1,19 @@
 # Invitation Enrollment Plug-in
 
-The Invitation Enrollment plug-in for Moodle allows instructor to invite
-students to their site and grant necessary access and role to them.
+The Invitation Enrollment plug-in for Moodle has been extended from [UCLA moodle enrol plugin](https://github.com/ucla/moodle-enrol_invitation) allows instructor to invite
+students to their site automatically creates a user account and grants necessary basica access and role to them.
 
 ## Download
 
-Visit the [GitHub page for the Invitation Enrolment plug-in](https://github.com/ucla/moodle-enrol_invitation) to download the package.
+Visit the [GitHub page for the Invitation Enrolment plug-in](https://github.com/ollielawson/moodle-enrol_invitation) to download the package.
 
 To clone the package into your organization's own repository from the command
 line, clone the plug-in repository into your own Moodle install folder by 
 doing the following at your Moodle root directory:
 
-    $ git clone https://github.com/ucla/moodle-enrol_invitation enrol/invitation
+    $ git clone https://github.com/ollielawson/moodle-enrol_invitation enrol/invitation
     
-Or download the files as a zipped file in the [releases section on GitHub](https://github.com/ucla/moodle-enrol_invitation/releases).
+Or download the files as a zipped file in the [releases section on GitHub](https://github.com/ollielawson/moodle-enrol_invitation/releases).
 
 ## Installation
 
@@ -27,7 +27,7 @@ With this enrollment plugin, instructor can invite and grant access to users to
 their course and site.  The invitation is sent via email that contains a link
 with an unique, one-time use invitation token. 
 
-When the user clicks on the link and login to the site, (s)he is automatically
+When the user clicks on the link and provides a password, a user account is automatically created and (s)he is automatically
 enrolled into the course and the invitation link is marked as used.
 
 The benefits of using this plug-in over an enrollment key are:
@@ -52,7 +52,7 @@ doing the following:
 
 1. Go to "Course administration > Users > Enrolled users".
 2. Click on "Invite user".
-3. Choose a role you want to invite someone as, then enter in their email address. You may optionally change the subject or add a custom message. Then click on "Invite user".
+3. The default student role will be chosen automatically however if it can't be detected you will need to choose a role you want to invite someone as, then enter in their email address. You may optionally change the subject or add a custom message. Then click on "Invite user".
 4. The invitation will be sent. The invitation will expire, by default, in 2 weeks. You can check the status of the invite by clicking on the "Invite history" tab.
 5. Depending on the status of the invitation, you might have the following actions:
 	* "Revoke invite": Will set the expiration of an active invitation to the current time. This will disable the use of the invitation link sent to the user.
