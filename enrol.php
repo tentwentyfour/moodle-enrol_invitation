@@ -64,36 +64,22 @@ $PAGE->set_heading($pagetitle);
 $PAGE->set_title($pagetitle);
 $PAGE->navbar->add($pagetitle);
 
-// Get.
+// Get the invitation config
 $invitationmanager = new invitation_manager($invitation->courseid);
 $instance = $invitationmanager->get_invitation_instance($invitation->courseid);
 
-// First multiple check related to the invitation plugin config.
-// @Todo better handle exceptions here.
-
-if (isguestuser()) {
-    // Can not enrol guest!!
-    echo $OUTPUT->header();
-
-    // Print out a heading.
-    echo $OUTPUT->heading($pagetitle, 2, 'headingblock');
-
-    echo $OUTPUT->box_start('generalbox', 'notice');
-
-    $notice_object = prepare_notice_object($invitation);
-    echo get_string('loggedinnot', 'enrol_invitation', $notice_object);
-    $loginbutton = new single_button(new moodle_url($CFG->wwwroot
-            . '/login/index.php'), get_string('login'));
-
-    echo $OUTPUT->render($loginbutton);
-    echo $OUTPUT->box_end();
-    echo $OUTPUT->footer();
-    exit;
-}
-
 // Have invitee confirm their acceptance of the site invitation.
 $confirm = optional_param('confirm', 0, PARAM_BOOL);
-if (empty($confirm)) {
+
+//now see if they have entered a password
+$password = optional_param('password', '', PARAM_RAW_TRIMMED);
+$passwordConfirm = optional_param('password_confirm', '', PARAM_RAW_TRIMMED);
+
+if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
+
+    //loading the page with no params so show the form
+    require_once(dirname(__FILE__) . '/enrol_form.php');
+
     echo $OUTPUT->header();
 
     // Print out a heading.
@@ -102,34 +88,61 @@ if (empty($confirm)) {
     add_to_log($invitation->courseid, 'course', 'invitation view',
         "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
 
-    $accepturl = new moodle_url('/enrol/invitation/enrol.php',
-            array('token' => $invitation->token, 'confirm' => true));
-    $accept = new single_button($accepturl,
-            get_string('invitationacceptancebutton', 'enrol_invitation'), 'get');
-    $cancel = new moodle_url('/');
-
-    $notice_object = prepare_notice_object($invitation);
-
-    $invitationacceptance = get_string('invitationacceptance',
-            'enrol_invitation', $notice_object);
-
     // If invitation has "daysexpire" set, then give notice.
     if (!empty($invitation->daysexpire)) {
         $invitationacceptance .= html_writer::tag('p',
-                get_string('daysexpire_notice', 'enrol_invitation',
-                        $invitation->daysexpire));
+            get_string('daysexpire_notice', 'enrol_invitation',
+                $invitation->daysexpire));
     }
 
-    echo $OUTPUT->confirm($invitationacceptance, $accept, $cancel);
+    //show the password form
+    $mform = new enrol_form(null, ['invitation' => $invitation], 'post');
+    echo $mform->display();
 
     echo $OUTPUT->footer();
     exit;
+
+} elseif (($confirm == 1) && ((empty($password) || empty($passwordConfirm)) || ($password != $passwordConfirm))) {
+
+    //tried to submit with partial/no password or passwords don't match
+    add_to_log($invitation->courseid, 'course', 'invitation user password fail',
+        "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+
+    redirect(new moodle_url('/enrol/invitation/enrol.php', ['token' => $invitation->token]), get_string('missing_password', 'enrol_invitation'), null, \core\output\notification::NOTIFY_ERROR);
+    exit;
+
 } else {
-    if ($invitation->email != $USER->email) {
-        add_to_log($invitation->courseid, 'course', 'invitation mismatch',
-            "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+    //successful submission
+    if ($USER->id == 0) {
+
+        //user not logged in so try to find an account
+        $invitationUser = $DB->get_record('user', ['email' => $invitation->email]);
+
+        if (!$invitationUser) {
+            //create a new user
+            require_once($CFG->dirroot . '/user/lib.php');
+            $newUser = new stdClass();
+            $newUser->email = $invitation->email;
+            $newUser->username = $invitation->email; //substr($invitation->email, 0, strpos($invitation->email,'@'));
+            $newUser->password = $password;
+            $newUser->confirmed = 1; //force the confirm
+
+            $newUser->id = user_create_user($newUser, true, true);
+
+            if (!$newUser->id) {
+                throw new moodle_exception('couldnotcreateuser', 'enrol_invitation');
+            } else {
+                $USER = $newUser;
+                add_to_log($invitation->courseid, 'course', 'create user .' . $USER->id . ' from invitation',
+                    "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+            }
+        } else {
+            //use existing user and ignore password
+            $USER = $invitationUser;
+        }
     }
-    // User confirmed, so add them.
+
+    // User confirmed, so add them to the course.
     require_once($CFG->dirroot . '/enrol/invitation/locallib.php');
     $invitationmanager = new invitation_manager($invitation->courseid);
     $invitationmanager->enroluser($invitation);
@@ -145,7 +158,7 @@ if (empty($confirm)) {
 
     if (!empty($invitation->notify_inviter)) {
         // Send an email to the user who sent the invitation.
-        $inviter = $DB->get_record('user', array('id' => $invitation->inviterid));
+        $inviter = $DB->get_record('user', ['id' => $invitation->inviterid]);
 
         $contactuser = new object;
         $contactuser->email = $inviter->email;
@@ -157,23 +170,26 @@ if (empty($confirm)) {
         $emailinfo->userfullname = trim($USER->firstname . ' ' . $USER->lastname);
         $emailinfo->useremail = $USER->email;
         $courseenrolledusersurl = new moodle_url('/enrol/users.php',
-                array('id' => $invitation->courseid));
+            ['id' => $invitation->courseid]);
         $emailinfo->courseenrolledusersurl = $courseenrolledusersurl->out(false);
         $invitehistoryurl = new moodle_url('/enrol/invitation/history.php',
-                array('courseid' => $invitation->courseid));
+            ['courseid' => $invitation->courseid]);
         $emailinfo->invitehistoryurl = $invitehistoryurl->out(false);
 
-        $course = $DB->get_record('course', array('id' => $invitation->courseid));
+        $course = $DB->get_record('course', ['id' => $invitation->courseid]);
         $emailinfo->coursefullname = sprintf('%s: %s', $course->shortname, $course->fullname);
         $emailinfo->sitename = $SITE->fullname;
         $siteurl = new moodle_url('/');
         $emailinfo->siteurl = $siteurl->out(false);
 
         email_to_user($contactuser, get_admin(),
-                get_string('emailtitleuserenrolled', 'enrol_invitation', $emailinfo),
-                get_string('emailmessageuserenrolled', 'enrol_invitation', $emailinfo));
+            get_string('emailtitleuserenrolled', 'enrol_invitation', $emailinfo),
+            get_string('emailmessageuserenrolled', 'enrol_invitation', $emailinfo));
+
     }
 
-    $courseurl = new moodle_url('/course/view.php', array('id' => $invitation->courseid));
+    \core\notification::success(get_string('enrollment_complete', 'enrol_invitation', prepare_notice_object($invitation)));
+
+    $courseurl = new moodle_url('/course/view.php', ['id' => $invitation->courseid]);
     redirect($courseurl);
 }
