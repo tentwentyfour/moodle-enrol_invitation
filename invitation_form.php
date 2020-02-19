@@ -36,13 +36,15 @@ require_once($CFG->dirroot . '/lib/enrollib.php');
  * @copyright  2013 UC Regents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class invitation_form extends moodleform {
+class invitation_form extends moodleform
+{
     /**
      * The form definition.
      */
-    public function definition() {
+    public function definition()
+    {
         global $CFG, $DB, $USER;
-        $mform = & $this->_form;
+        $mform = &$this->_form;
 
         // Get rid of "Collapse all" in Moodle 2.5+.
         if (method_exists($mform, 'setDisableShortforms')) {
@@ -56,34 +58,52 @@ class invitation_form extends moodleform {
         $mform->setType('courseid', PARAM_INT);
         $mform->setDefault('courseid', $course->id);
 
-        // Set roles.
-        $mform->addElement('header', 'header_role', get_string('header_role', 'enrol_invitation'));
-
+        // get the roles for this course.
         $site_roles = $this->get_appropiate_roles($course);
-        $label = get_string('assignrole', 'enrol_invitation');
-        $role_group = array();
-        foreach ($site_roles as $role_type => $roles) {
-            $role_type_string = html_writer::tag('div',
-                    get_string('archetype'.$role_type, 'role'),
-                    array('class' => 'label badge-info'));
-            $role_group[] = &$mform->createElement('static', 'role_type_header',
-                    '', $role_type_string);
 
-            foreach ($roles as $role) {
-                $role_string = $this->format_role_string($role);
-                $role_group[] = &$mform->createElement('radio', 'roleid', '',
-                        $role_string, $role->id);
+        //only ever going to need student group here so attempt to find it
+        $studentRole = false;
+        foreach ($site_roles as $roleType => $roles) {
+            if ($roleType == 'student') {
+                $studentRole = current($roles);
+                break;
             }
         }
 
-        $mform->addGroup($role_group, 'role_group', $label);
-        $mform->addRule('role_group',
+        if ($studentRole) {
+            //found the student role so default to it and insert it into the form in a hidden field
+            $mform->addElement('hidden', 'role_group[roleid]'); //have to hack the field name a little here
+            $mform->setType('role_group[roleid]', PARAM_INT);
+            $mform->setDefault('role_group[roleid]', $studentRole->id);
+        } else {
+            //can't find a student role so show the list and let the user choose
+            $mform->addElement('header', 'header_role', get_string('header_role', 'enrol_invitation'));
+            $label = get_string('assignrole', 'enrol_invitation');
+            $role_group = array();
+
+            foreach ($site_roles as $role_type => $roles) {
+                $role_type_string = html_writer::tag('div',
+                    get_string('archetype' . $role_type, 'role'),
+                    array('class' => 'label badge-info'));
+                $role_group[] = &$mform->createElement('static', 'role_type_header',
+                    '', $role_type_string);
+
+                foreach ($roles as $role) {
+                    $role_string = $this->format_role_string($role);
+                    $role_group[] = &$mform->createElement('radio', 'roleid', '',
+                        $role_string, $role->id);
+                }
+            }
+
+            $mform->addGroup($role_group, 'role_group', $label);
+            $mform->addRule('role_group',
                 get_string('norole', 'enrol_invitation'), 'required');
 
+        }
         // Email address field.
         $mform->addElement('header', 'header_email', get_string('header_email', 'enrol_invitation'));
         $mform->addElement('textarea', 'email', get_string('emailaddressnumber', 'enrol_invitation'),
-                array('maxlength' => 1000, 'class' => 'form-invite-email'));
+            array('maxlength' => 1000, 'class' => 'form-invite-email'));
         $mform->addRule('email', null, 'required', null, 'client');
         $mform->setType('email', PARAM_TEXT);
         // Check for correct email formating later in validation() function.
@@ -91,20 +111,20 @@ class invitation_form extends moodleform {
 
         // Ssubject field.
         $mform->addElement('text', 'subject', get_string('subject', 'enrol_invitation'),
-                array('class' => 'form-invite-subject'));
+            array('class' => 'form-invite-subject'));
         $mform->setType('subject', PARAM_TEXT);
         $mform->addRule('subject', get_string('required'), 'required');
         // Default subject is "Site invitation for <course title>".
         $default_subject = get_string('default_subject', 'enrol_invitation',
-                sprintf('%s: %s', $course->shortname, $course->fullname));
+            sprintf('%s: %s', $course->shortname, $course->fullname));
         $mform->setDefault('subject', $default_subject);
 
         // Message field.
         $mform->addElement('textarea', 'message', get_string('message', 'enrol_invitation'),
-                array('class' => 'form-invite-message'));
+            array('class' => 'form-invite-message'));
         // Put help text to show what default message invitee gets.
         $mform->addHelpButton('message', 'message', 'enrol_invitation',
-                get_string('message_help_link', 'enrol_invitation'));
+            get_string('message_help_link', 'enrol_invitation'));
 
         // Email options.
         // Prepare string variables.
@@ -112,14 +132,14 @@ class invitation_form extends moodleform {
         $temp->email = $USER->email;
         $temp->supportemail = $CFG->supportemail;
         $mform->addElement('checkbox', 'show_from_email', '',
-                get_string('show_from_email', 'enrol_invitation', $temp));
+            get_string('show_from_email', 'enrol_invitation', $temp));
         $mform->addElement('checkbox', 'notify_inviter', '',
-                get_string('notify_inviter', 'enrol_invitation', $temp));
+            get_string('notify_inviter', 'enrol_invitation', $temp));
         $mform->setDefault('show_from_email', 1);
         $mform->setDefault('notify_inviter', 0);
 
         // Set defaults if the user is resending an invite that expired.
-        if ( !empty($prefilled) ) {
+        if (!empty($prefilled)) {
             $mform->setDefault('role_group[roleid]', $prefilled['roleid']);
             $mform->setDefault('email', $prefilled['email']);
             $mform->setDefault('subject', $prefilled['subject']);
@@ -137,7 +157,8 @@ class invitation_form extends moodleform {
      *
      * @return object
      */
-    public function get_data() {
+    public function get_data()
+    {
         $retval = parent::get_data();
 
         // Check if form validated, and if user submitted daysexpire from POST.
@@ -156,12 +177,13 @@ class invitation_form extends moodleform {
      * Given a role record, format string to be displayable to user. Filter out
      * role notes and other information.
      *
-     * @param object $role  Record from role table.
+     * @param object $role Record from role table.
      * @return string
      */
-    private function format_role_string($role) {
+    private function format_role_string($role)
+    {
         $role_string = html_writer::tag('span', $role->name . ':',
-                array('class' => 'role-name'));
+            array('class' => 'role-name'));
 
         // Role description has a <hr> tag to separate out info for users
         // and admins.
@@ -181,11 +203,12 @@ class invitation_form extends moodleform {
      * Private class method to return a list of appropiate roles for given
      * course and user.
      *
-     * @param object $course    Course record.
+     * @param object $course Course record.
      *
      * @return array            Returns array of roles indexed by role archetype.
      */
-    private function get_appropiate_roles($course) {
+    private function get_appropiate_roles($course)
+    {
         global $DB;
         $retval = array();
         $context = context_course::instance($course->id);
@@ -216,7 +239,8 @@ class invitation_form extends moodleform {
      *
      * @return array
      */
-    public function validation($data, $files) {
+    public function validation($data, $files)
+    {
         $errors = array();
         $delimiters = "/[;, \r\n]/";
         $email_list = self::parse_dsv_emails($data['email'], $delimiters);
@@ -232,11 +256,12 @@ class invitation_form extends moodleform {
      * Parses a string containing delimiter seperated values for email addresses.
      * Returns an empty array if an invalid email is found.
      *
-     * @param string $emails           string of emails to be parsed
-     * @param string $delimiters       list of delimiters as regex
+     * @param string $emails string of emails to be parsed
+     * @param string $delimiters list of delimiters as regex
      * @return array $parsed_emails    array of emails
      */
-    public static function parse_dsv_emails($emails, $delimiters) {
+    public static function parse_dsv_emails($emails, $delimiters)
+    {
         $parsed_emails = array();
         $emails = trim($emails);
         if (preg_match($delimiters, $emails)) {
