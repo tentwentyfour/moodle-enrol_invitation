@@ -1,5 +1,6 @@
 <?php
 // This file is part of the UCLA Site Invitation Plugin for Moodle - http://moodle.org/
+// Modified by Dorset Creative to allow user signup and enrollment in one process
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,42 +21,42 @@
  * @package    enrol_invitation
  * @copyright  2013 UC Regents
  * @copyright  2011 Jerome Mouneyrac {@link http://www.moodleitandme.com}
+ * @copyright  2020 Dorset Creative {@link https://www.dorsetcreative.co.uk}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require('../../config.php');
 require($CFG->dirroot . '/enrol/invitation/locallib.php');
 
-require_login(null, false);
 
-// Check if param token exist. Support checking for both old
-// "enrolinvitationtoken" token name and new "token" parameters.
-$enrolinvitationtoken = optional_param('enrolinvitationtoken', null, PARAM_ALPHANUM);
-if (empty($enrolinvitationtoken)) {
-    $enrolinvitationtoken = required_param('token', PARAM_ALPHANUM);
-}
+//get the additional config settings for this plugin
+$pluginConfig = get_config('enrol_invitation');
+
+// Check if param token exist and bomb if not.
+$enrolinvitationtoken = required_param('token', PARAM_ALPHANUM);
 
 // Retrieve the token info.
 $invitation = $DB->get_record('enrol_invitation',
-        array('token' => $enrolinvitationtoken, 'tokenused' => false));
+    ['token' => $enrolinvitationtoken, 'tokenused' => false]);
 
 // If token is valid, enrol the user into the course.
+// check for validity of token/course
 if (empty($invitation) or empty($invitation->courseid) or $invitation->timeexpiration < time()) {
     $courseid = empty($invitation->courseid) ? $SITE->id : $invitation->courseid;
     add_to_log($courseid, 'course', 'invitation expired',
         "../enrol/invitation/history.php?courseid=$courseid",
-        $DB->get_record('course', array('id' => $courseid), 'fullname')->fullname);
+        $DB->get_record('course', ['id' => $courseid], 'fullname')->fullname);
     throw new moodle_exception('expiredtoken', 'enrol_invitation');
 }
 
 // Make sure that course exists.
-$course = $DB->get_record('course', array('id' => $invitation->courseid), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $invitation->courseid], '*', MUST_EXIST);
 $context = context_course::instance($course->id);
 
 // Set up page.
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/enrol/invitation/enrol.php',
-        array('token' => $enrolinvitationtoken)));
+    ['token' => $enrolinvitationtoken]));
 $PAGE->set_pagelayout('course');
 $PAGE->set_course($course);
 $pagetitle = get_string('invitation_acceptance_title', 'enrol_invitation');
