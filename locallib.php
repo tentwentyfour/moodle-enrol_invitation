@@ -164,9 +164,6 @@ class invitation_manager
                 $invitation->notify_inviter = empty($data->notify_inviter) ? 0 : 1;
                 $invitation->show_from_email = empty($data->show_from_email) ? 0 : 1;
 
-                // Construct message: custom (if any) + template.
-                $message = $this->render_invitation_email($invitation, $course);
-
                 if (!$resend) {
                     $DB->insert_record('enrol_invitation', $invitation);
                 }
@@ -187,7 +184,7 @@ class invitation_manager
                 $mail->addAddress($invitation->email);
                 $mail->Subject = $invitation->subject;
                 $mail->isHTML(true);
-                $mail->Body = $message;
+                $mail->Body = $this->render_invitation_email($invitation, $course);;
 
                 $mail->send();
 
@@ -207,7 +204,7 @@ class invitation_manager
     }
 
     /**
-     * Use the templating engine to build a nice HTML email 
+     * Use the templating engine to build a nice HTML email
      * @param $invitation
      * @param $course
      * @return mixed
