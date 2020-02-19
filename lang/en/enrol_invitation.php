@@ -58,7 +58,7 @@ $string['defaultrole_desc'] = 'Select role which should be assigned to users dur
 $string['default_subject'] = 'Invitation for {$a}';
 $string['editenrollment'] = 'Edit enrollment';
 $string['header_email'] = 'Who do you want to invite?';
-$string['emailaddressnumber'] = 'Email address';
+$string['emailaddressnumber'] = 'Email address(es)';
 
 $string['notifymsg'] = 'Hello, I would like to inform you that user $a->username, with email $a->email has successful gained access to your course, $a->course';
 
@@ -86,9 +86,11 @@ $string['enrolstartdate_help'] = 'If enabled, users can be enrolled from this da
 $string['editenrolment'] = 'Edit enrolment';
 $string['inviteexpiration'] = 'Invitation expiration';
 $string['inviteexpiration_desc'] = 'Length of time that an invitation is valid (in seconds). Default is 2 weeks.';
+$string['createaccount'] = 'Create a user account?';
+$string['createaccount_desc'] = 'If enabled a new user account will be created automatically if one doesn\'t exist for the invited email address' ;
 
 $string['show_from_email'] = 'Allow invited user to contact me at {$a->email} (your address will be on the "FROM" field. If not selected, the "FROM" field will be {$a->supportemail})';
-$string['inviteusers'] = 'Invite user';
+$string['inviteusers'] = 'Invite patient';
 $string['maxinviteerror'] = 'It must be a number.';
 $string['maxinviteperday'] = 'Maximum invitation per day';
 $string['maxinviteperday_help'] = 'Maximum invitation that can be send per day for a course.';
@@ -143,10 +145,13 @@ $string['loggedinnot'] = '<p>This invitation to access "{$a->coursefullname}" as
     <p>
         Before you can accept this invitation you must be logged in.
     </p>';
-$string['invitationacceptance'] = '<p>This invitation to access
+$string['invitationacceptance'] = 'This invitation to access
     "{$a->coursefullname}" as a "{$a->rolename}" is intended for {$a->email}.
-    If you are not the intended recipient, please do not accept this invitation.</p>';
+    If you are not the intended recipient, please do not accept this invitation.';
 $string['invitationacceptancebutton'] = 'Accept invitation';
+
+$string['password_help'] = 'The password must have at least 8 characters, at least 1 digit(s), at least 1 lower case letter(s), at least 1 upper case letter(s), at least 1 non-alphanumeric character(s) such as as *, -, or # ';
+$string['password_prompt'] = '<p>Please enter a password and confirm it below in order to confirm secure your account.</p>';
 
 // Invite history strings.
 $string['invitehistory'] = 'Invite history';
@@ -178,7 +183,7 @@ $string['action_resend_invite'] = 'Resend invite';
 
 // Capabilities strings.
 $string['invitation:config'] = 'Configure invitation instances';
-$string['invitation:enrol'] = 'Invite users';
+$string['invitation:enrol'] = 'Invite patients';
 $string['invitation:manage'] = 'Manage invitation assignments';
 $string['invitation:unenrol'] = 'Unassign users from the course';
 $string['invitation:unenrolself'] = 'Unassign self from the course';
@@ -193,3 +198,10 @@ $string['about_hour'] = 'about 1 hour';
 $string['about_x_hours'] = 'about {$a} hours';
 $string['a_day'] = '1 day';
 $string['x_days'] = '{$a} days';
+
+$string['confirm_header'] = 'Confirm';
+$string['user_password'] = 'Please enter a password';
+$string['user_password_confirm'] = 'Please confirm your password';
+$string['missing_password'] = 'Please make sure you have filled in the password and confirmation fields and they are both the same';
+$string['user_not_found_and_cant_create'] = 'Your email address could not be found to continue setup. Please contact your course administrator.';
+$string['enrollment_complete'] = '<strong>Congratulations!</strong> You have been successfully enrolled on "{$a->coursefullname}" as a "{$a->rolename}".';

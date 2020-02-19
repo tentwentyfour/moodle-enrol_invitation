@@ -41,4 +41,8 @@ if ($ADMIN->fulltree) {
     // Default to 2 weeks expiration.
     $settings->add(new admin_setting_configtext('enrol_invitation/inviteexpiration',
         get_string('inviteexpiration', 'enrol_invitation'), get_string('inviteexpiration_desc', 'enrol_invitation'), 1209600, PARAM_INT));
+
+    //create a new user if one doesn't exist?
+    $settings->add(new admin_setting_configselect('enrol_invitation/createaccount',
+        get_string('createaccount','enrol_invitation'), get_string('createaccount_desc','enrol_invitation'), ENROL_INSTANCE_ENABLED, $options));
 }
