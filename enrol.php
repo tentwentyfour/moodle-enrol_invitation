@@ -126,7 +126,7 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
 
         if (!$invitationUser) {
             //are we allowed to create an account?
-            if($pluginConfig->createaccount == 0) {
+            if ($pluginConfig->createaccount == 1) {
                 //create a new user
                 require_once($CFG->dirroot . '/user/lib.php');
                 $newUser = new stdClass();
@@ -179,7 +179,7 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
         // Send an email to the user who sent the invitation.
         $inviter = $DB->get_record('user', ['id' => $invitation->inviterid]);
 
-        $contactuser = new object;
+        $contactuser = new stdClass();
         $contactuser->email = $inviter->email;
         $contactuser->firstname = $inviter->firstname;
         $contactuser->lastname = $inviter->lastname;
