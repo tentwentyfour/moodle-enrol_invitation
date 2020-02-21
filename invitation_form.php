@@ -58,6 +58,13 @@ class invitation_form extends moodleform
         $mform->setType('courseid', PARAM_INT);
         $mform->setDefault('courseid', $course->id);
 
+        //get the cohort
+        $cohorts = $this->get_cohorts();
+        $mform->addElement('header', 'header_cohort', get_string('header_cohort', 'enrol_invitation'));
+        $mform->addElement('select', 'cohortid', get_string('cohort', 'enrol_invitation'), $cohorts);
+        $mform->setDefault('cohortid', null);
+        $mform->addRule('cohortid', null, 'required', null, 'client');
+
         // get the roles for this course.
         $site_roles = $this->get_appropiate_roles($course);
 
@@ -79,12 +86,12 @@ class invitation_form extends moodleform
             //can't find a student role so show the list and let the user choose
             $mform->addElement('header', 'header_role', get_string('header_role', 'enrol_invitation'));
             $label = get_string('assignrole', 'enrol_invitation');
-            $role_group = array();
+            $role_group = [];
 
             foreach ($site_roles as $role_type => $roles) {
                 $role_type_string = html_writer::tag('div',
                     get_string('archetype' . $role_type, 'role'),
-                    array('class' => 'label badge-info'));
+                    ['class' => 'label badge-info']);
                 $role_group[] = &$mform->createElement('static', 'role_type_header',
                     '', $role_type_string);
 
@@ -103,7 +110,7 @@ class invitation_form extends moodleform
         // Email address field.
         $mform->addElement('header', 'header_email', get_string('header_email', 'enrol_invitation'));
         $mform->addElement('textarea', 'email', get_string('emailaddressnumber', 'enrol_invitation'),
-            array('maxlength' => 1000, 'class' => 'form-invite-email'));
+            ['maxlength' => 1000, 'class' => 'form-invite-email']);
         $mform->addRule('email', null, 'required', null, 'client');
         $mform->setType('email', PARAM_TEXT);
         // Check for correct email formating later in validation() function.
@@ -111,7 +118,7 @@ class invitation_form extends moodleform
 
         // Ssubject field.
         $mform->addElement('text', 'subject', get_string('subject', 'enrol_invitation'),
-            array('class' => 'form-invite-subject'));
+            ['class' => 'form-invite-subject']);
         $mform->setType('subject', PARAM_TEXT);
         $mform->addRule('subject', get_string('required'), 'required');
         // Default subject is "Site invitation for <course title>".
@@ -121,7 +128,7 @@ class invitation_form extends moodleform
 
         // Message field.
         $mform->addElement('textarea', 'message', get_string('message', 'enrol_invitation'),
-            array('class' => 'form-invite-message'));
+            ['class' => 'form-invite-message']);
         // Put help text to show what default message invitee gets.
         $mform->addHelpButton('message', 'message', 'enrol_invitation',
             get_string('message_help_link', 'enrol_invitation'));
@@ -140,6 +147,7 @@ class invitation_form extends moodleform
 
         // Set defaults if the user is resending an invite that expired.
         if (!empty($prefilled)) {
+            $mform->setDefault('cohortid', $prefilled['cohortid']);
             $mform->setDefault('role_group[roleid]', $prefilled['roleid']);
             $mform->setDefault('email', $prefilled['email']);
             $mform->setDefault('subject', $prefilled['subject']);
@@ -174,6 +182,28 @@ class invitation_form extends moodleform
     }
 
     /**
+     * Get the cohorts for the dropdown
+     * @return array
+     * @throws dml_exception
+     */
+    private function get_cohorts()
+    {
+        global $DB;
+
+        $out = ['' => get_string('choose_cohort', 'enrol_invitation')];
+
+        $dbRecords = $DB->get_records('cohort', ['visible' => 1], 'name ASC', 'id,name');
+
+        if ($dbRecords) {
+            foreach ($dbRecords as $record) {
+                $out[$record->id] = $record->name;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Given a role record, format string to be displayable to user. Filter out
      * role notes and other information.
      *
@@ -183,7 +213,7 @@ class invitation_form extends moodleform
     private function format_role_string($role)
     {
         $role_string = html_writer::tag('span', $role->name . ':',
-            array('class' => 'role-name'));
+            ['class' => 'role-name']);
 
         // Role description has a <hr> tag to separate out info for users
         // and admins.
@@ -210,7 +240,7 @@ class invitation_form extends moodleform
     private function get_appropiate_roles($course)
     {
         global $DB;
-        $retval = array();
+        $retval = [];
         $context = context_course::instance($course->id);
         $roles = get_assignable_roles($context);
 
@@ -220,7 +250,7 @@ class invitation_form extends moodleform
 
         // Get full role records for archetype and description.
         foreach ($roles as $roleid => $rolename) {
-            $record = $DB->get_record('role', array('id' => $roleid));
+            $record = $DB->get_record('role', ['id' => $roleid]);
             $record->name = $rolename;  // User might have customised name.
             $retval[$record->archetype][] = $record;
         }
@@ -241,7 +271,7 @@ class invitation_form extends moodleform
      */
     public function validation($data, $files)
     {
-        $errors = array();
+        $errors = [];
         $delimiters = "/[;, \r\n]/";
         $email_list = self::parse_dsv_emails($data['email'], $delimiters);
 
@@ -262,7 +292,7 @@ class invitation_form extends moodleform
      */
     public static function parse_dsv_emails($emails, $delimiters)
     {
-        $parsed_emails = array();
+        $parsed_emails = [];
         $emails = trim($emails);
         if (preg_match($delimiters, $emails)) {
             // Multiple email addresses specified.
@@ -270,15 +300,17 @@ class invitation_form extends moodleform
             foreach ($dsv_emails as $email_value) {
                 $email_value = trim($email_value);
                 if (!clean_param($email_value, PARAM_EMAIL)) {
-                    return array();
+                    return [];
                 }
                 $parsed_emails[] = $email_value;
             }
-        } else if (clean_param($emails, PARAM_EMAIL)) {
-            // Single email.
-            return (array)$emails;
         } else {
-            return array();
+            if (clean_param($emails, PARAM_EMAIL)) {
+                // Single email.
+                return (array)$emails;
+            } else {
+                return [];
+            }
         }
 
         return $parsed_emails;

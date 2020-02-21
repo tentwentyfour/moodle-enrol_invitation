@@ -137,6 +137,7 @@ class invitation_manager
 
                 // Save token information in config (token value, course id, TODO: role id).
                 $invitation = new stdClass();
+                $invitation->cohortid = $data->cohortid;
                 $invitation->email = $data->email;
                 $invitation->courseid = $data->courseid;
                 $invitation->token = $token;

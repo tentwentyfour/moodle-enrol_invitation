@@ -57,6 +57,9 @@ $string['defaultrole'] = 'Default role assignment';
 $string['defaultrole_desc'] = 'Select role which should be assigned to users during invitation enrollments';
 $string['default_subject'] = 'Invitation for {$a}';
 $string['editenrollment'] = 'Edit enrollment';
+$string['header_cohort'] = 'Choose Cohort';
+$string['cohort'] = 'Cohort';
+$string['choose_cohort'] = 'Choose a cohort';
 $string['header_email'] = 'Who do you want to invite?';
 $string['emailaddressnumber'] = 'Email address(es)';
 
