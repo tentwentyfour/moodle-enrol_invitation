@@ -356,7 +356,7 @@ class invitation_manager
      */
     public function enroluser($invitation)
     {
-        global $USER;
+        global $USER, $CFG;
 
         // Handle daysexpire by adding making the enrollment expiration be the
         // end of the day after daysexpire days.
@@ -375,6 +375,10 @@ class invitation_manager
         $enrol = enrol_get_plugin('invitation');
         $enrol->enrol_user($this->enrolinstance, $USER->id,
             $invitation->roleid, 0, $timeend);
+
+        //add the user to the cohort
+        require_once("$CFG->dirroot/cohort/lib.php");
+        cohort_add_member($invitation->cohortid, $USER->id);
     }
 
     /**
