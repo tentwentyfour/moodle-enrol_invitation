@@ -259,5 +259,24 @@ function xmldb_enrol_invitation_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2013030102, 'enrol', 'invitation');
     }
 
+    if ($oldversion < 2020022110) {
+
+        // Define field cohortid to be added to enrol_invitation.
+        $table = new xmldb_table('enrol_invitation');
+        $field = new xmldb_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'courseid');
+
+        // Conditionally launch add field cohortid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $key = new xmldb_key('cohortid', XMLDB_KEY_FOREIGN, ['cohortid'], 'cohort', ['id']);
+
+        // Launch add key cohortid.
+        $dbman->add_key($table, $key);
+
+        // Invitation savepoint reached.
+        upgrade_plugin_savepoint(true, 2020022110, 'enrol', 'invitation');
+    }
     return true;
 }
