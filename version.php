@@ -20,12 +20,13 @@
  * @package    enrol_invitation
  * @copyright  2013 UC Regents
  * @copyright  2011 Jerome Mouneyrac {@link http://www.moodleitandme.com}
+ * @copyright  2020 Dorset Creative {@link https://www.doresetcreative.co.uk}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2020022110;
+$plugin->version  = 2020022113;
 $plugin->requires = 2013030102;   // Requires Moodle 2.2 or later
 $plugin->maturity = MATURITY_RC;
 $plugin->component = 'enrol_invitation';
