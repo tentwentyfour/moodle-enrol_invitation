@@ -41,10 +41,13 @@ $invitation = $DB->get_record('enrol_invitation',
 // If token is valid, enrol the user into the course.
 // check for validity of token/course
 if (empty($invitation) or empty($invitation->courseid) or $invitation->timeexpiration < time()) {
+
     $courseid = empty($invitation->courseid) ? $SITE->id : $invitation->courseid;
-    add_to_log($courseid, 'course', 'invitation expired',
-        "../enrol/invitation/history.php?courseid=$courseid",
-        $DB->get_record('course', ['id' => $courseid], 'fullname')->fullname);
+
+    $event = \enrol_invitation\event\invitation_expired::create([
+        'objectid' => $DB->get_record('course', ['id' => $courseid], 'fullname')->fullname
+    ]);
+
     throw new moodle_exception('expiredtoken', 'enrol_invitation');
 }
 
@@ -84,8 +87,10 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
     // Print out a heading.
     echo $OUTPUT->heading($pagetitle, 2, 'headingblock');
 
-    add_to_log($invitation->courseid, 'course', 'invitation view',
-        "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+    $event = \enrol_invitation\event\invitation_view::create([
+        'objectid' => $course->fullname,
+        'context' => $context
+    ]);
 
     // If invitation has "daysexpire" set, then give notice.
     if (!empty($invitation->daysexpire)) {
@@ -104,8 +109,10 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
 } elseif (($confirm == 1) && ((empty($password) || empty($passwordConfirm)) || ($password != $passwordConfirm))) {
 
     //tried to submit with partial/no password or passwords don't match
-    add_to_log($invitation->courseid, 'course', 'invitation user password fail',
-        "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+    $event = \enrol_invitation\event\user_password_fail::create([
+        'objectid' => $course->fullname,
+        'context' => $context
+    ]);
 
     redirect(new moodle_url('/enrol/invitation/enrol.php', ['token' => $invitation->token]), get_string('missing_password', 'enrol_invitation'), null, \core\output\notification::NOTIFY_ERROR);
     exit;
@@ -134,8 +141,12 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
                     throw new moodle_exception('couldnotcreateuser', 'enrol_invitation');
                 } else {
                     $USER = $newUser;
-                    add_to_log($invitation->courseid, 'course', 'create user .' . $USER->id . ' from invitation',
-                        "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+
+                    $event = \enrol_invitation\event\create_user_from_invitation::create([
+                        'objectid' => $course->fullname,
+                        'context' => $context
+                    ]);
+
                 }
             } else {
                 //can't create a user and one wasn't found
@@ -153,8 +164,10 @@ if (empty($confirm) || empty($password) || empty($passwordConfirm)) {
     $invitationmanager = new invitation_manager($invitation->courseid);
     $invitationmanager->enroluser($invitation);
 
-    add_to_log($invitation->courseid, 'course', 'invitation claim',
-        "../enrol/invitation/history.php?courseid=$invitation->courseid", $course->fullname);
+    $event = \enrol_invitation\event\invitation_claim::create([
+        'objectid' => $course->fullname,
+        'context' => $context
+    ]);
 
     // Set token as used and mark which user was assigned the token.
     $invitation->tokenused = true;
