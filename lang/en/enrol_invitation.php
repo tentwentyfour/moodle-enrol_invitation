@@ -93,7 +93,7 @@ $string['createaccount'] = 'Create a user account?';
 $string['createaccount_desc'] = 'If enabled a new user account will be created automatically if one doesn\'t exist for the invited email address' ;
 
 $string['show_from_email'] = 'Allow invited user to contact me at {$a->email} (your address will be on the "FROM" field. If not selected, the "FROM" field will be {$a->supportemail})';
-$string['inviteusers'] = 'Invite patient';
+$string['inviteusers'] = 'Invite user';
 $string['maxinviteerror'] = 'It must be a number.';
 $string['maxinviteperday'] = 'Maximum invitation per day';
 $string['maxinviteperday_help'] = 'Maximum invitation that can be send per day for a course.';
@@ -186,7 +186,7 @@ $string['action_resend_invite'] = 'Resend invite';
 
 // Capabilities strings.
 $string['invitation:config'] = 'Configure invitation instances';
-$string['invitation:enrol'] = 'Invite patients';
+$string['invitation:enrol'] = 'Invite users';
 $string['invitation:manage'] = 'Manage invitation assignments';
 $string['invitation:unenrol'] = 'Unassign users from the course';
 $string['invitation:unenrolself'] = 'Unassign self from the course';
